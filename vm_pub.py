@@ -1,4 +1,6 @@
-#vm_pub.py
+"""EE 250L Lab 04 Starter Code
+Run vm_sub.py in a separate terminal on your VM."""
+
 import paho.mqtt.client as mqtt
 import time
 from datetime import datetime
@@ -42,19 +44,16 @@ if __name__ == '__main__':
         client.publish("gkohanba/ipinfo", f"{ip_address}")
         print("Publishing ip address")
         time.sleep(4)
-        client.publish("gkohanba/dataInfo", f"{date}")
-        print("Publishing date info")
-        time.sleep(4)
-        client.publish("gkohanba/timeInfo", f"{time}")
-        print("Publishing time info")
 
         #get date and time 
         """your code here"""
-        dateInfo = datetime.today()
-        timeInfo = datetime.time()
-
+        now = datetime.now()
         #publish date and time in their own topics
         """your code here"""
-        dateInfo.publish("gkohanba/dateInfo", f"{date}")
-        timeInfo.publish("gkohanba/timeInfo", f"{time}")
-        print("Publishing date and time")
+        client.publish("gkohanba/dateInfo", f"{now.date()}")
+        print("Publishing date info")
+        time.sleep(4)
+        
+        client.publish("gkohanba/timeInfo", f"{now.time()}")
+        print("Publishing time info")
+        time.sleep(4)
