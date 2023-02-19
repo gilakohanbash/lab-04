@@ -1,37 +1,41 @@
-#vm_start_chain.py
-import rospy
-from std_msgs.msg import String
+import paho.mqtt.client as mqtt
+import time
+from datetime import datetime
+import socket
 
-#function to publish messages at a rate of 2 messages per second
-def publisher():
+"""This function (or "callback") will be executed when this client receives a connection
+acknowledgement packet response from the server. """
+def on_connect(client, userdata, flags, rc):
+	print("Connected to server (i.e., broker) with result code" +str(rc))
+	client.subscribe("gkohanba/ping")
+	client.publish("gkohanba/pong", "0")
+	
+	#Add the custom callback
+	client.message_callback_add("gkohanba/ping", callback_on_ping)
 
-#integer num as payload
-num = 0
-#define a topic to which the messages will be published
-message_publisher = rospy.Publisher('gkohanba/ping', int, queue_size=10)
 
-#initialize the Publisher node
-#anonymous-True appends random ints at the end of publisher node
-rospy.init_node('messagePubNode', anonymous=True)
+def callback_on_ping(client, userdata, message):
+	print("Custom callback - Message: "+message.payload.decode())
+	msg = int(message.payload.decode())
+	msg = msg + 1
+	time.sleep(1)
+	client.publish("gkohanba/pong", f"{msg}")
+	
 
-#publishes at a rate of 2 messages per second
-rate = rospy.Rate(2)
+if __name__=='__main__':
+	
+	#get IP address
+	ip_address="192.168.64.2"
+	#create a client object
+	client = mqtt.Client()
 
-#publishes messages indefinetly
-while True:
-  message = "hello world %s"
-  num++
-  rospy.loginfo('Published: ' + message)
+	#attach the on_connect() callback function defined above to the mqtt client
+	client.on_connect = on_connect
 
-#add a time.sleep() before publishing
-time.sleep(1)
-message_publisher.publish(message)
-#rate.sleep()
+	client.connect(host="192.168.64.2", port=1883, keepalive=60)
 
-if__name__=='__main__':
-try:
-  publisher()
+	"""ask paho-mqtt to spawn a spearate thread to handle incoming and
+	outgoing mqtt messages."""
+	
 
-#capture the Interrupt signals
-except rospy.ROSInterruptException:
-  pass
+	client.loop_forever()
