@@ -1,24 +1,40 @@
-#vm_cont_chain.py
-import rospy
-from std_msgs.msg import String
+import paho.mqtt.client as mqtt
+import time
 
-#Callback function to print the subscribed data on the terminal
-def callback_str(subscribedData):
-rospy.loginfo('Subscribed: ' + subscribedData.data)
+"""This function (or "callback") will be executed when this client receives
+a connection acknowledgement packet response from the server. """
 
-#Subscriber node function which will subscribe the messages from the Topic
-def messageSubscriber():
-#initialize the subscriber node called 'messageSubNode'
-rospy.init_node('messageSubNode', anonymous=False)
+def on_connect(client, userdata, flags, rc):
+	"""Once our client has successfully connected, it makes sense to subscribe
+	to all the topics of interest. Also, subscribing in on_connect() means that 
+	if we lose the connection and the library reconnects for us, this callback
+	will be called again thus renewing the subscriptions"""
 
-#This is to subscribe to the messages from the topic named 'messageTopic'
-rospy.Subscriber('messageTopic', String, callback_str)
+	client.subscribe("gkohanba/pong")
 
-#rospy.spin() stops the node from exiting until the node has shut down
-rospy.spin()
+	#Add the custom callback by indicating the topic and the name of the callback
+	client.message_callback_add("gkohanba/pong", callback_on_pong)
 
-if__name__=='__main__':
-try:
-  messageSubscriber()
-except rospy.ROSInterruptException
-  pass
+"""This object (functions are objects!) serves as the default callback for
+messages received when another node publishes a message this client is
+subscribed to. By "default,"" we mean that this callback is called if a custom
+callback has not been registered using paho-mqtt's message_callback_add()."""
+
+#when listeniing, what to do with message
+def callback_on_pong(client, userdata, msg):
+	print("Custom callback - Message: "+msg.payload.decode())
+	msg = int(msg.payload.decode())
+	msg = msg + 1
+	time.sleep(1)
+	client.publish("gkohanba/ping", msg)
+
+
+
+if __name__=='__main__':
+	#create a client object
+	client = mqtt.Client()
+	
+	#attach the on_connect() callback function defined above to the mqtt client
+	client.on_connect = on_connect
+	client.connect(host="192.168.64.2", port=1883, keepalive=60)
+	client.loop_forever()
